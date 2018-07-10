@@ -61,7 +61,7 @@ public final class ReadView: BaseView {
         // Update our tableview
         readCollectionView.reloadData()
     }
-    
+        
 }
 
 extension ReadView {
@@ -96,7 +96,12 @@ extension ReadView {
 
 extension ReadView: UICollectionViewDelegate {
     
-    
+    public func collectionView(_ collectionView: UICollectionView, performAction action: Selector, forItemAt indexPath: IndexPath, withSender sender: Any?) {
+        let email = readEmails.remove(at: indexPath.row)
+
+        // Let state service know
+        👾.emailStateProvider.dispatch(Email.Events.MarkAsUnReadEvent(email: email))
+    }
     
 }
 

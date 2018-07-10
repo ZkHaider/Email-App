@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-public final class ReadCollectionViewCell: UICollectionViewCell {
+public final class ReadCollectionViewCell: UICollectionViewCell, UIGestureRecognizerDelegate {
     
     // MARK: - Views
     
@@ -61,6 +61,8 @@ public final class ReadCollectionViewCell: UICollectionViewCell {
     
     // MARK: - Attributes
     
+    var panGesture: UIPanGestureRecognizer!
+    
     var model: EmailModel? {
         didSet {
             guard let model = model else { return }
@@ -77,6 +79,9 @@ public final class ReadCollectionViewCell: UICollectionViewCell {
     
     public override init(frame: CGRect) {
         super.init(frame: frame)
+        panGesture = UIPanGestureRecognizer(target: self, action: #selector(pan(_:)))
+        panGesture.delegate = self
+        self.addGestureRecognizer(panGesture)
         initialize()
     }
     
@@ -94,6 +99,16 @@ public final class ReadCollectionViewCell: UICollectionViewCell {
     
     public override func layoutSubviews() {
         super.layoutSubviews()
+        
+        // Handle pan
+        switch panGesture.state {
+        case .changed:
+            let p: CGPoint = panGesture.translation(in: self)
+            let width = self.contentView.frame.width
+            let height = self.contentView.frame.height
+            self.contentView.frame = CGRect(x: p.x,y: 0, width: width, height: height)
+        default: break
+        }
         
         let bounds = self.contentView.bounds
         // Inset container view frame by 20.0
@@ -124,6 +139,11 @@ public final class ReadCollectionViewCell: UICollectionViewCell {
     
     private func update(withModel model: EmailModel, isInitial: Bool) {
         
+        UIView.animate(withDuration: 0.2, animations: {
+            self.setNeedsLayout()
+            self.layoutIfNeeded()
+        })
+        
         subjectLabel.text = model.subject
         sendersLabel.text = model.to.joined(separator: ", ")
         bodyLabel.text = model.body
@@ -150,6 +170,46 @@ public final class ReadCollectionViewCell: UICollectionViewCell {
             }
         }
     }
+    
+    // MARK: - Target
+    
+    @objc private func pan(_ sender: UIPanGestureRecognizer) {
+        
+        switch panGesture.state {
+        case .began:
+            break
+        case .changed:
+            self.setNeedsLayout()
+        case .cancelled:
+            UIView.animate(withDuration: 0.2, animations: {
+                self.setNeedsLayout()
+                self.layoutIfNeeded()
+            })
+        case .ended:
+            if abs(panGesture.velocity(in: self).x) > 500 {
+                let collectionView: UICollectionView = self.superview as! UICollectionView
+                let indexPath: IndexPath = collectionView.indexPathForItem(at: self.center)!
+                collectionView.delegate?.collectionView!(collectionView, performAction: #selector(pan(_:)), forItemAt: indexPath, withSender: nil)
+            } else {
+                UIView.animate(withDuration: 0.2, animations: {
+                    self.setNeedsLayout()
+                    self.layoutIfNeeded()
+                })
+            }
+        default: break
+        }
+    }
+    
+    // MARK: - Gesture
+    
+    public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true
+    }
+    
+    override public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        return abs((panGesture.velocity(in: panGesture.view)).x) > abs((panGesture.velocity(in: panGesture.view)).y)
+    }
+
     
 }
 

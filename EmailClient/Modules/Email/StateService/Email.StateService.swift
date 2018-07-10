@@ -62,8 +62,11 @@ public final class EmailStateService: BaseService, EmailStateProvider {
             for: Email.Events.GetEmailsEvent.name,
             handler: Self.handleGetEmails)
         add(listener: self,
-            for: Email.Events.UpdateEmailEvent.name,
-            handler: Self.handleUpdateEmail)
+            for: Email.Events.MarkAsReadEvent.name,
+            handler: Self.handleMarkAsRead)
+        add(listener: self,
+            for: Email.Events.MarkAsUnReadEvent.name,
+            handler: Self.handleMarkAsUnRead)
     }
     
     // MARK: - Realm Changes
@@ -156,7 +159,7 @@ public final class EmailStateService: BaseService, EmailStateProvider {
         }
     }
     
-    private func handleUpdateEmail(_ event: Email.Events.UpdateEmailEvent) {
+    private func handleMarkAsRead(_ event: Email.Events.MarkAsReadEvent) {
         👾.loggingStateProvider.dispatch(Logging.Events.LogEvent(logRecording: .event(event, CFAbsoluteTimeGetCurrent())))
         
         // Immediate update UI
@@ -167,6 +170,50 @@ public final class EmailStateService: BaseService, EmailStateProvider {
                                       body: email.body,
                                       date: email.date,
                                       unread: false,
+                                      to: email.to)
+        
+        let realm = Realm.emailDomain.realm
+        realm.work({
+            realm.add(updatedEmail.managedObject(), update: true)
+        })
+        
+        let networkStateProvider: NetworkStateProvider = 👾.networkStateProvider
+        networkStateProvider.emailProvider.request(.updateEmail(id: String(describing: email.id))) { [weak self] result in
+            guard let this = self else { return }
+            switch result {
+            case .success(let response):
+                
+                let data = response.data
+                do {
+                    
+                    let remoteEmail = try networkStateProvider.jsonDecoder.decode(EmailModel.self, from: data)
+                    
+                    // Update our realm domain with emails
+                    realm.work({
+                        realm.add(remoteEmail.managedObject(), update: true)
+                    })
+                    
+                } catch let error as NSError {
+                    this.errorSignal.value = ErrorModel(error: error, type: .other)
+                }
+                
+            case .failure(let error):
+                this.errorSignal.value = ErrorModel(error: error, type: .network)
+            }
+        }
+    }
+    
+    private func handleMarkAsUnRead(_ event: Email.Events.MarkAsUnReadEvent) {
+        👾.loggingStateProvider.dispatch(Logging.Events.LogEvent(logRecording: .event(event, CFAbsoluteTimeGetCurrent())))
+        
+        // Immediate update UI
+        let email = event.email
+        let updatedEmail = EmailModel(id: email.id,
+                                      subject: email.subject,
+                                      from: email.from,
+                                      body: email.body,
+                                      date: email.date,
+                                      unread: true,
                                       to: email.to)
         
         let realm = Realm.emailDomain.realm

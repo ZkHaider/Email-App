@@ -167,7 +167,7 @@ public final class UnreadCollectionViewCell: UICollectionViewCell {
         
         // Let our email service know we are marking this as read
         guard let email = model else { return }
-        👾.emailStateProvider.dispatch(Email.Events.UpdateEmailEvent(email: email))
+        👾.emailStateProvider.dispatch(Email.Events.MarkAsReadEvent(email: email))
     }
     
 }

@@ -13,12 +13,18 @@ extension Email {
     public struct Events {
         public struct ViewDidLoad: IdentifiableEvent {}
         public struct GetEmailsEvent: IdentifiableEvent {}
-        public struct UpdateEmailEvent: IdentifiableEvent {
+        public struct MarkAsReadEvent: IdentifiableEvent {
             public let email: EmailModel
             public init(email: EmailModel) {
                 self.email = email
             }
-        }        
+        }
+        public struct MarkAsUnReadEvent: IdentifiableEvent {
+            public let email: EmailModel
+            public init(email: EmailModel) {
+                self.email = email
+            }
+        }
     }
     
 }

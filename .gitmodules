@@ -1,0 +1,8 @@
+[submodule "Carthage/Checkouts/Cartography"]
+	url = https://github.com/robb/Cartography.git
+[submodule "Carthage/Checkouts/realm-cocoa"]
+	url = https://github.com/realm/realm-cocoa.git
+[submodule "Carthage/Checkouts/RxSwift"]
+	url = https://github.com/ReactiveX/RxSwift.git
+[submodule "Carthage/Checkouts/Result"]
+	url = https://github.com/antitypical/Result.git

@@ -23,6 +23,15 @@ public final class ReadView: BaseView {
     
     // MARK: - Views
     
+    let readLabel: UILabel = {
+        let view = UILabel(frame: .zero)
+        view.text = "READ EMAILS"
+        view.font = Styles.Fonts.avenirNextDemibold.font(with: 14.0)
+        view.textAlignment = .left
+        view.textColor = Styles.Colors.primaryColor.uiColor
+        return view
+    }()
+    
     let readCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
@@ -59,11 +68,18 @@ extension ReadView {
     
     fileprivate func initialize() {
         func addSubviews() {
+            self.addSubview(readLabel)
             self.addSubview(readCollectionView)
         }
         func setupConstraints() {
-            constrain(readCollectionView) {
-                $0.edges == $0.superview!.edges
+            constrain(readLabel, readCollectionView) {
+                $0.leading == $0.superview!.leading + 10.0
+                $0.top == $0.superview!.top
+                $0.height == 20.0
+                $0.bottom == $1.top - 4.0
+                $1.leading == $1.superview!.leading
+                $1.trailing == $1.superview!.trailing
+                $1.bottom == $1.superview!.bottom
             }
         }
         func prepareViews() {
